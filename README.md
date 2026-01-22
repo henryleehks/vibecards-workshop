@@ -1,36 +1,144 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VibeCards
+
+AI-powered flashcard generator built with Next.js, Clerk, Supabase, and OpenAI.
+
+## Features
+
+- **AI-Powered Generation**: Enter any topic and get 8-12 high-quality flashcards instantly
+- **User Authentication**: Secure sign-in/sign-up with Clerk
+- **Persistent Storage**: All decks saved to Supabase for later review
+- **Private by Default**: Users can only view their own decks
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Auth**: Clerk
+- **Database**: Supabase (PostgreSQL)
+- **AI**: OpenAI Responses API with Structured Outputs (Zod)
+- **Deployment**: Vercel
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- Clerk account ([dashboard.clerk.com](https://dashboard.clerk.com))
+- Supabase project ([supabase.com](https://supabase.com))
+- OpenAI API key ([platform.openai.com](https://platform.openai.com))
+
+### 1. Clone and Install
+
+```bash
+git clone <your-repo-url>
+cd vibecards-workshop
+npm install
+```
+
+### 2. Set Up Environment Variables
+
+Copy the example file and fill in your credentials:
+
+```bash
+cp .env.example .env.local
+```
+
+Required variables:
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - From Clerk Dashboard
+- `CLERK_SECRET_KEY` - From Clerk Dashboard
+- `NEXT_PUBLIC_SUPABASE_URL` - From Supabase Settings > API
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - From Supabase Settings > API
+- `SUPABASE_SERVICE_ROLE_KEY` - From Supabase Settings > API
+- `OPENAI_API_KEY` - From OpenAI Platform
+
+### 3. Set Up Supabase Database
+
+Run the schema in your Supabase SQL Editor:
+
+```sql
+-- From supabase/schema.sql
+CREATE TABLE IF NOT EXISTS decks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  cards JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_decks_owner_id ON decks(owner_id);
+CREATE INDEX IF NOT EXISTS idx_decks_created_at ON decks(created_at DESC);
+```
+
+### 4. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Option 1: One-Click Deploy
 
-## Learn More
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=YOUR_REPO_URL)
 
-To learn more about Next.js, take a look at the following resources:
+### Option 2: Manual Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Push your code to GitHub
+2. Go to [vercel.com/new](https://vercel.com/new)
+3. Import your repository
+4. Add environment variables:
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+   - `CLERK_SECRET_KEY`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `OPENAI_API_KEY`
+5. Deploy!
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+src/
+├── app/
+│   ├── api/
+│   │   └── generate-deck/   # POST endpoint for deck generation
+│   ├── dashboard/           # Protected dashboard page
+│   ├── deck/[id]/           # Individual deck view
+│   ├── sign-in/             # Clerk sign-in page
+│   ├── sign-up/             # Clerk sign-up page
+│   ├── layout.tsx           # Root layout with providers
+│   ├── page.tsx             # Landing page
+│   └── providers.tsx        # ClerkProvider wrapper
+├── lib/
+│   └── supabase/            # Supabase client utilities
+└── middleware.ts            # Clerk auth middleware
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Endpoints
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### POST /api/generate-deck
+
+Generate a new flashcard deck.
+
+**Request:**
+```json
+{
+  "topic": "JavaScript Promises"
+}
+```
+
+**Response:**
+```json
+{
+  "deckId": "uuid",
+  "title": "JavaScript Promises Flashcards",
+  "cardCount": 10
+}
+```
+
+## License
+
+MIT
